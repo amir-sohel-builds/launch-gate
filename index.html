@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Launch Gate, live</title>
+<meta name="description" content="Four sample AI agents run through the real launch checks from agent-skills. Nothing here is mocked: the verdicts come from the checker and the eval suite.">
+<style>
+:root{
+  --bg:#fbfbfa;--fg:#111;--mute:#6b6b6b;--line:#e6e6e3;--cell:#e9e9e6;
+  --go:#1a7f4b;--no:#c62828;--pass:#111;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b0b0c;--fg:#f2f2f0;--mute:#8d8d8a;--line:#242426;--cell:#1d1d1f;--go:#3ecf8e;--no:#ff6b6b;--pass:#f2f2f0}}
+:root[data-theme=dark]{--bg:#0b0b0c;--fg:#f2f2f0;--mute:#8d8d8a;--line:#242426;--cell:#1d1d1f;--go:#3ecf8e;--no:#ff6b6b;--pass:#f2f2f0}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+header a,.btn{color:var(--mute);font-size:14px;text-decoration:none;background:none;border:0;cursor:pointer;font-family:inherit}
+header a:hover,.btn:hover{color:var(--fg)}
+h1{font-size:clamp(34px,6vw,60px);line-height:1.05;letter-spacing:-.03em;margin:48px 0 14px;font-weight:650}
+.sub{color:var(--mute);max-width:600px;font-size:18px;margin:0 0 36px}
+.stats{display:flex;flex-wrap:wrap;gap:8px 36px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:36px}
+.stat b{display:block;font-size:26px;letter-spacing:-.02em;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--mute)}
+.ticks{display:flex;gap:2px;align-items:flex-end;height:26px}
+.ticks i{width:4px;height:100%;background:var(--go);border-radius:1px;opacity:.85}
+.ticks i.f{background:var(--no)}
+.lane{padding:22px 0;border-bottom:1px solid var(--line)}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:12px}
+.name{font-weight:600;font-size:18px}
+.purpose{color:var(--mute);font-size:14px}
+.verdict{font-weight:650;font-size:15px;letter-spacing:.04em;opacity:0;transition:opacity .4s;white-space:nowrap;font-variant-numeric:tabular-nums}
+.verdict.on{opacity:1}
+.verdict.GO{color:var(--go)}.verdict.NOGO{color:var(--no)}
+.cells{display:grid;grid-template-columns:repeat(12,1fr);gap:6px}
+.c{aspect-ratio:1/1;border-radius:6px;background:var(--cell);border:0;padding:0;cursor:default;transition:background .25s,transform .25s;position:relative}
+.c.p{background:var(--pass);transform:scale(1)}
+.c.f{background:var(--no)}
+.c.p.go{background:var(--go)}
+.c.pop{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.c:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.why{min-height:22px;margin-top:10px;font-size:14px;color:var(--mute)}
+.why b{color:var(--no);font-weight:600}
+.why.ok b{color:var(--go)}
+.break{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:none;color:var(--fg);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed=true]{border-color:var(--no);color:var(--no)}
+.legend{display:flex;gap:18px;font-size:13px;color:var(--mute);margin:18px 0 0;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.names{margin:36px 0 8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 24px;font-size:13px;color:var(--mute);padding:0;list-style:none}
+.names b{color:var(--fg);font-weight:500;margin-right:6px;font-variant-numeric:tabular-nums}
+footer{padding:36px 0 64px;color:var(--mute);font-size:14px;max-width:640px}
+footer a{color:var(--fg)}
+footer p{margin:0 0 12px}
+.replay{margin:22px 0 0}
+@media (max-width:640px){
+  .cells{grid-template-columns:repeat(6,1fr)}
+  .top{flex-direction:column;gap:4px}
+  .verdict{align-self:flex-start}
+  h1{margin-top:28px}
+}
+@media (prefers-reduced-motion:reduce){.c,.verdict{transition:none}.c.pop{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><a href="https://amir-sohel-builds.github.io/">Amir Sohel</a><button class="btn" id="theme" aria-label="Toggle dark mode">Dark</button></header>
+
+<h1>The Launch Gate, live.</h1>
+<p class="sub">Four sample agents, twelve blocking checks each. The verdicts below come from the real checker and the real eval suite in <a href="https://github.com/amir-sohel-builds/agent-skills" style="color:inherit">agent-skills</a>, re-run on a schedule.</p>
+
+<div class="stats" id="stats"></div>
+<div id="lanes"></div>
+
+<div class="legend"><span><i style="background:var(--pass)"></i>Passed</span><span><i style="background:var(--no)"></i>Blocks the launch</span><span><i style="background:var(--cell)"></i>Not yet checked</span></div>
+<p class="replay"><button class="btn" id="replay">Replay</button></p>
+
+<ol class="names" id="names"></ol>
+
+<footer>
+<p>One blocking check is enough for NO-GO. Warnings never block. The checker is plain Python with no model in the loop, so the same spec gets the same verdict every time.</p>
+<p>The idea of showing a real system running, live, came from Shopify's BFCM live globe. Nothing here shares its code or visuals.</p>
+<p>Specs, runner and workflow: <a href="https://github.com/amir-sohel-builds/launch-gate">launch-gate</a>. The sample agents are made up.</p>
+</footer>
+</div>
+
+<script src="data/latest.js"></script>
+<script>
+(function(){
+var D=window.GATE_DATA;
+if(!D){document.getElementById('lanes').textContent='Data not loaded.';return}
+var NAMES=["Owner named","Sources listed","Refuses without a source","Eval suite exists","Pass rate meets threshold","One-step rollback","Prompts versioned","Monthly cost cap","Human approval on writes","Runs with caller's permissions","Logs and traces","Privacy review if PII"];
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var root=document.documentElement;
+try{var t=localStorage.getItem('lg-theme');if(t)root.setAttribute('data-theme',t)}catch(e){}
+function isDark(){var a=root.getAttribute('data-theme');return a?a==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
+var tb=document.getElementById('theme');
+function lab(){tb.textContent=isDark()?'Light':'Dark'}
+lab();
+tb.onclick=function(){var n=isDark()?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('lg-theme',n)}catch(e){}lab()};
+
+function ago(iso){var m=Math.round((Date.now()-new Date(iso))/60000);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<48)return h+' h ago';return Math.round(h/24)+' days ago'}
+var ev=D.evals;
+var st=document.getElementById('stats');
+st.innerHTML='<div class="stat"><b>'+ev.passed+'/'+(ev.passed+ev.failed)+'</b><span>evals passing</span></div>'+
+ '<div class="stat"><b>'+D.skills+'</b><span>skills in the repo</span></div>'+
+ '<div class="stat"><b>'+ago(D.generated_at)+'</b><span>last run, commit '+D.agent_skills_commit+'</span></div>'+
+ '<div class="stat"><div class="ticks" id="ticks" title="Recent eval runs"></div><span>recent runs</span></div>';
+fetch('data/history.json').then(function(r){return r.json()}).then(function(h){
+  var el=document.getElementById('ticks');h.slice(-30).forEach(function(x){var i=document.createElement('i');if(x.failed)i.className='f';el.appendChild(i)})
+}).catch(function(){document.getElementById('ticks').parentNode.style.display='none'});
+
+document.getElementById('names').innerHTML=NAMES.map(function(n,i){return'<li><b>A'+(i+1)+'</b>'+n+'</li>'}).join('');
+
+var lanes=document.getElementById('lanes');
+var state=[];
+D.agents.forEach(function(a,ai){
+  var lane=document.createElement('section');lane.className='lane';
+  var go=a.verdict==='GO';
+  lane.innerHTML='<div class="top"><div><div class="name"></div><div class="purpose"></div></div><div class="verdict"></div></div><div class="cells"></div><div class="why" aria-live="polite"></div>';
+  lane.querySelector('.name').textContent=a.name;
+  lane.querySelector('.purpose').textContent=a.purpose;
+  var cells=lane.querySelector('.cells');
+  var cs=[];
+  for(var i=0;i<12;i++){var c=document.createElement('button');c.className='c';c.type='button';c.setAttribute('aria-label','A'+(i+1)+' '+NAMES[i]);c.dataset.i=i;cells.appendChild(c);cs.push(c)}
+  lanes.appendChild(lane);
+  var s={a:a,lane:lane,cs:cs,fails:{},go:go,why:lane.querySelector('.why'),verdict:lane.querySelector('.verdict'),broken:{}};
+  a.blocking.forEach(function(b){s.fails[b.id]=b.reason});
+  state.push(s);
+  cs.forEach(function(c,i){
+    function show(){var id='A'+(i+1);var r=s.fails[id];s.why.className='why'+(r?'':' ok');s.why.innerHTML='<b>'+id+' '+NAMES[i]+'</b> '+(r?'blocks: '+esc(r):'passes')}
+    c.onmouseenter=show;c.onfocus=show;c.onclick=show;
+  });
+  if(go&&a.breaks&&a.breaks.length){
+    var br=document.createElement('div');br.className='break';
+    a.breaks.forEach(function(b,bi){
+      var chip=document.createElement('button');chip.className='chip';chip.type='button';chip.setAttribute('aria-pressed','false');chip.textContent=b.label;
+      chip.onclick=function(){
+        var on=chip.getAttribute('aria-pressed')!=='true';chip.setAttribute('aria-pressed',on);
+        if(on)s.broken[b.id]=b.reason;else delete s.broken[b.id];
+        paint(s,true)
+      };br.appendChild(chip)});
+    var hint=document.createElement('span');hint.className='purpose';hint.style.alignSelf='center';hint.textContent='Break it:';br.insertBefore(hint,br.firstChild);
+    lane.insertBefore(br,s.why);
+  }
+});
+function esc(x){return String(x).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function failsOf(s){var f={},k;for(k in s.fails)f[k]=s.fails[k];for(k in s.broken)f[k]=s.broken[k];return f}
+function settle(s){
+  var f=failsOf(s),n=Object.keys(f).length,ok=n===0;
+  s.verdict.className='verdict on '+(ok?'GO':'NOGO');
+  s.verdict.textContent=(ok?'GO':'NO-GO')+' · '+(12-n)+'/12';
+  var first=Object.keys(f)[0];
+  s.why.className='why'+(ok?' ok':'');
+  s.why.innerHTML=ok?'<b>Every blocking check passes.</b>':'<b>'+first+'</b> '+esc(f[first])+(n>1?' <span>and '+(n-1)+' more</span>':'');
+}
+function paint(s,pop){
+  var f=failsOf(s);
+  s.cs.forEach(function(c,i){
+    var id='A'+(i+1),bad=!!f[id];
+    c.className='c '+(bad?'f':'p'+(s.go?' go':''));
+    if(pop&&bad&&!c.dataset.was){c.classList.add('pop')}
+    c.dataset.was=bad?'1':'';
+  });
+  settle(s);
+}
+var timers=[];
+function run(){
+  timers.forEach(clearTimeout);timers=[];
+  state.forEach(function(s){
+    s.broken={};
+    s.lane.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed','false')});
+    s.verdict.className='verdict';s.verdict.textContent='';s.why.textContent='';
+    s.cs.forEach(function(c){c.className='c';c.dataset.was=''});
+  });
+  if(reduce){state.forEach(function(s){paint(s,false)});return}
+  state.forEach(function(s,li){
+    var base=300+li*420;
+    s.cs.forEach(function(c,i){
+      timers.push(setTimeout(function(){
+        var bad=!!s.fails['A'+(i+1)];
+        c.className='c pop '+(bad?'f':'p'+(s.go?' go':''));
+        c.dataset.was=bad?'1':'';
+      },base+i*110));
+    });
+    timers.push(setTimeout(function(){settle(s)},base+12*110+120));
+  });
+}
+document.getElementById('replay').onclick=run;
+run();
+})();
+</script>
+</body>
+</html>
