@@ -20,7 +20,3 @@ git clone https://github.com/amir-sohel-builds/agent-skills agent-skills
 python3 -I tools/run_gate.py
 python3 -m http.server
 ```
-
-## Credit
-
-The idea of showing a real system running live came from Shopify's BFCM live globe. This project shares none of its code or visuals.
