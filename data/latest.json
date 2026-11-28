@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-27T17:52:55Z",
+  "generated_at": "2026-11-28T01:27:31Z",
   "agent_skills_commit": "bb2976b",
   "skills": 17,
   "evals": {
     "passed": 32,
     "failed": 0,
-    "seconds": 1.2
+    "seconds": 0.8
   },
   "agents": [
     {
